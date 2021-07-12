@@ -1,2 +1,2 @@
 # dbdoku.py
-Python Script that generates browsable HTML based on Microsoft SQL Servers. 
+Python script that generates browsable HTML based on Microsoft SQL Servers. 
