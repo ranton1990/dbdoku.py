@@ -65,7 +65,7 @@ def depon(fi,constr,schema,table):
     fi.write("""
                         <h1>Dependencies</h1>
                         <div>
-                            <h2>Dependent from this object</h2>
+                            <h2>Dependent on this object</h2>
                             <table border='1'>
                                     <tr>
                                         <th>Schema</th>
