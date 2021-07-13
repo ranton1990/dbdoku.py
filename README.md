@@ -8,11 +8,11 @@ To get git functionality, you should install git packages and add an SSH key fro
 You should create your git-repo before running this script for the first time, as it only accesses already existing repos, but does not create them.
 
 This script uses the following packages, install any that are missing:
-*sys
-*os
-*pyodbc
-*codecs
-*shutil
-*datetime
-*git
-*re
+* sys
+* os
+* pyodbc
+* codecs
+* shutil
+* datetime
+* git
+* re
