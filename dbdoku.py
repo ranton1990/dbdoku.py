@@ -26,7 +26,7 @@ logFileName = 'dbdoku.log' #change to specify the name of you log file. Ignore i
 
 
 path = '/var/www/dbdoku/' #where to put the html files, linux style.
-#path = 'C:\\Users\\User\\Desktop\\dbdoku\\' #where to put the html files, windows style.
+#path = 'C:\\Users\\username\\Desktop\\dbdoku\\' #where to put the html files, windows style.
 
 PATH_OF_GIT_REPO = path+r".git"  #where is the git folder? usually inside path.
 COMMIT_MESSAGE = "Changes from " + str(datetime.datetime.now()) #git commit message.
@@ -203,8 +203,7 @@ try:
         cnxn.close()
     else:
         dsnarray.append(dsninput)
-        shutil.rmtree(path+dnsinput, ignore_errors=True)
-        os.mkdir(path+dnsinput)
+        shutil.rmtree(path+dsninput, ignore_errors=True)
 
     for dsn in dsnarray:
         print("INFO ",datetime.datetime.now(),' Generating for Database ',dsn)
@@ -466,6 +465,7 @@ try:
     f.close()
     print("INFO ",datetime.datetime.now()," Now we start pushing to git.")
     git_push()
+    print("INFO ",datetime.datetime.now()," And we are DONE!")
     exit
 except:
      print("ERRO ",datetime.datetime.now()," Unexpected error:", sys.exc_info()[0])
