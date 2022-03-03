@@ -164,6 +164,81 @@ def depof(fi,constr,schema,table):
     fi.write("""
             </table>
         </div>""")
+    
+def trigger(fi,constr,schema,table):
+    fi.write("""
+                        <h1>Trigger</h1>
+                        <div>
+                        <table border='1'>
+                        <th>Name</th>
+                        <th>IsUpdate</th>
+                        <th>IsDelete</th>
+                        <th>IsInsert</th>
+                        <th>IsAfter</th>
+                        <th>IsInsteadof</th>
+                        <th>Disabled</th>
+                        <th>Definition</th>
+                            """)
+    try:
+        cnxntrigger = pyodbc.connect(constr)
+        cursortrigger = cnxntrigger.cursor()
+        cursortrigger.execute(""" SELECT 
+        s.name AS table_schema 
+        ,OBJECT_NAME(id) AS table_name 
+        ,OBJECTPROPERTY( id, 'ExecIsUpdateTrigger') AS isupdate 
+        ,OBJECTPROPERTY( id, 'ExecIsDeleteTrigger') AS isdelete 
+        ,OBJECTPROPERTY( id, 'ExecIsInsertTrigger') AS isinsert 
+        ,OBJECTPROPERTY( id, 'ExecIsAfterTrigger') AS isafter 
+        ,OBJECTPROPERTY( id, 'ExecIsInsteadOfTrigger') AS isinsteadof 
+        ,OBJECTPROPERTY(id, 'ExecIsTriggerDisabled') AS [disabled] 
+        ,OBJECT_DEFINITION (OBJECT_ID(concat(s.name,'.',sysobjects.name))) AS trigger_definition
+
+        FROM sysobjects 
+
+        INNER JOIN sysusers 
+            ON sysobjects.uid = sysusers.uid 
+
+        INNER JOIN sys.tables t 
+            ON sysobjects.parent_obj = t.object_id 
+
+        INNER JOIN sys.schemas s 
+            ON t.schema_id = s.schema_id 
+
+        WHERE sysobjects.type = 'TR' 
+        and t.name = '"""+xstr(table)+"""'
+        and s.name = '"""+xstr(schema)+"""'; """)
+        try:
+            rowtrigger = cursortrigger.fetchone()
+            while rowtrigger:
+                fi.write("""
+                        <tr>
+                            <td>"""+xstr(rowtrigger[1])+"""</td>
+                            <td>"""+xstr(rowtrigger[2])+"""</td>
+                            <td>"""+xstr(rowtrigger[3])+"""</td>
+                            <td>"""+xstr(rowtrigger[4])+"""</td>
+                            <td>"""+xstr(rowtrigger[5])+"""</td>
+                            <td>"""+xstr(rowtrigger[6])+"""</td>
+                            <td>"""+xstr(rowtrigger[7])+"""</td>
+                            <td><pre>"""+xstr(rowtrigger[8])+"""</pre></td>
+                        </tr>""")
+                rowtrigger = cursortrigger.fetchone()
+        except:
+            if (xstr(schema)!=archivedNamespace):
+                print("ERRO ",datetime.datetime.now()," No Trigger found, even though one was determined beforehand.")
+            else:
+                print("WARN ",datetime.datetime.now()," No Trigger found, even though one was determined beforehand.  We ignore this, because the object is in the archived schema.")
+        
+        cursortrigger.close()
+        del cursortrigger
+        cnxntrigger.close()
+    except pyodbc.Error as e:
+        if (xstr(schema)!=archivedNamespace):
+            print("ERRO ",datetime.datetime.now()," SQL-Server threw an error, you should check on the server: ", e)
+        else:
+            print("WARN ",datetime.datetime.now()," SQL-Server threw an error, the object is in the archived schema, though: ", e)
+    fi.write("""
+                </table>
+            </div>""")
 #-------End of Functions------------------------------------------
 
 #-------Code------------------------------------------------------
@@ -274,7 +349,23 @@ try:
             cursor = cnxn.cursor()
             if tabletype == 'BASE TABLE':
                 cursor.execute("""SELECT
-                            table_schema,table_name
+                            table_schema,table_name, (SELECT 
+                                count(id)
+
+                            FROM sysobjects 
+
+                            INNER JOIN sysusers 
+                                ON sysobjects.uid = sysusers.uid 
+
+                            INNER JOIN sys.tables t 
+                                ON sysobjects.parent_obj = t.object_id 
+
+                            INNER JOIN sys.schemas s 
+                                ON t.schema_id = s.schema_id 
+
+                            WHERE sysobjects.type = 'TR' 
+                            and t.name = table_name
+                            and s.name = table_Schema)
                             FROM INFORMATION_SCHEMA.TABLES
                             WHERE TABLE_TYPE = '"""+tabletype+"""'
                             ORDER BY table_schema,TABLE_NAME""")
@@ -378,6 +469,9 @@ try:
                     cursorfk.close()
                     del cursorfk
                     cnxnfk.close()
+                if tabletype == 'BASE TABLE':
+                    if row[2] > 0:
+                        trigger(fi,constr,xstr(row[0]),xstr(row[1]))  
                 depon(fi,constr,xstr(row[0]),xstr(row[1]))
                 if tabletype == 'VIEW':
                     depof(fi,constr,xstr(row[0]),xstr(row[1]))
